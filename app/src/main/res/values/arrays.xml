@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="cities">
+        <item>City</item>
+        <item>Ho Chi Minh</item>
+        <item>Hanoi</item>
+        <item>Da Nang</item>
+    </string-array>
+
+    <string-array name="cinemas">
+        <item>Cinema</item>
+        <item>Galaxy Nguyễn Du</item>
+        <item>CGV Vincom</item>
+        <item>Lotte Cinema</item>
+    </string-array>
+</resources>
