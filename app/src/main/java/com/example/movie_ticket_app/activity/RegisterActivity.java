@@ -2,6 +2,7 @@ package com.example.movie_ticket_app.activity;
 
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -10,7 +11,6 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,6 +18,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.movie_ticket_app.R;
+import com.example.movie_ticket_app.common.APIResponse;
+import com.example.movie_ticket_app.config.ApiClient;
+import com.example.movie_ticket_app.data.api.ApiServices;
+import com.example.movie_ticket_app.dto.auth.request.RegisterRequest;
+import com.example.movie_ticket_app.dto.auth.response.RegisterResponse;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -25,6 +30,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -246,10 +255,34 @@ public class RegisterActivity extends AppCompatActivity {
         String birthday = editTextBirthday.getText().toString().trim();
 
         // Create user registration model
-        UserRegistration user = new UserRegistration(
+        RegisterRequest user = new RegisterRequest(
                 username, email, password, mobile, gender, birthday);
 
         // TODO: Send registration data to your API
+        ApiServices apiServices = ApiClient.getRetrofitInstance().create(ApiServices.class);
+        Call<APIResponse<RegisterResponse>> call = apiServices.register(user);
+        call.enqueue(new Callback<APIResponse<RegisterResponse>>() {
+            @Override
+            public void onResponse(Call<APIResponse<RegisterResponse>> call, Response<APIResponse<RegisterResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    RegisterResponse data = response.body().getMetadata();
+                    String email = data.getEmail();
+                    String token = data.getToken();
+
+                    Intent intent = new Intent(RegisterActivity.this, OtpInputActivity.class);
+                    intent.putExtra("email", email);
+                    intent.putExtra("token", token);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(RegisterActivity.this, "Đăng ký thất bại", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<APIResponse<RegisterResponse>> call, Throwable t) {
+                Toast.makeText(RegisterActivity.this, "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
         // For now, just show a success message
         Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
     }
@@ -285,74 +318,5 @@ public class RegisterActivity extends AppCompatActivity {
             }
         }
 
-    }
-
-    // User registration model class
-    public static class UserRegistration {
-        private String userName;
-        private String userEmail;
-        private String userPassword;
-        private String userMobile;
-        private boolean userGender;
-        private String userBirthday;
-
-        public UserRegistration(String userName, String userEmail, String userPassword,
-                                String userMobile, boolean userGender, String userBirthday) {
-            this.userName = userName;
-            this.userEmail = userEmail;
-            this.userPassword = userPassword;
-            this.userMobile = userMobile;
-            this.userGender = userGender;
-            this.userBirthday = userBirthday;
-        }
-
-        // Getters and setters
-        public String getUserName() {
-            return userName;
-        }
-
-        public void setUserName(String userName) {
-            this.userName = userName;
-        }
-
-        public String getUserEmail() {
-            return userEmail;
-        }
-
-        public void setUserEmail(String userEmail) {
-            this.userEmail = userEmail;
-        }
-
-        public String getUserPassword() {
-            return userPassword;
-        }
-
-        public void setUserPassword(String userPassword) {
-            this.userPassword = userPassword;
-        }
-
-        public String getUserMobile() {
-            return userMobile;
-        }
-
-        public void setUserMobile(String userMobile) {
-            this.userMobile = userMobile;
-        }
-
-        public boolean isUserGender() {
-            return userGender;
-        }
-
-        public void setUserGender(boolean userGender) {
-            this.userGender = userGender;
-        }
-
-        public String getUserBirthday() {
-            return userBirthday;
-        }
-
-        public void setUserBirthday(String userBirthday) {
-            this.userBirthday = userBirthday;
-        }
     }
 }

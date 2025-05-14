@@ -20,6 +20,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Login Button - Positioned on top of the banner -->
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:textSize="12sp"
+        android:padding="8dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/login_button_background"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="10dp"
+        android:stateListAnimator="@null"
+        android:translationZ="10dp"/>
+
     <!-- Tab Navigation -->
     <LinearLayout
         android:id="@+id/llTabNavigation"
@@ -104,7 +121,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_movie" />
-
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

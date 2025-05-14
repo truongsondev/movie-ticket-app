@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">movie-ticket-app</string>
+    <string name="select_city">Chọn thành phố</string>
+    <string name="select_cinema">Chọn rạp</string>
+
+    <string-array name="cities">
+        <item>Hồ Chí Minh</item>
+        <item>Đà Nẵng</item>
+    </string-array>
+
+    <string-array name="cinemas">
+        <item>Tất cả rạp</item>
+        <item>Galaxy Nguyễn Du</item>
+        <item>Galaxy Tân Bình</item>
+        <item>Galaxy Quang Trung</item>
+    </string-array>
 </resources>

@@ -2,6 +2,7 @@ package com.example.movie_ticket_app.view;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.movie_ticket_app.R;
+import com.example.movie_ticket_app.activity.MovieDetailActivity;
 import com.example.movie_ticket_app.dto.movie.response.MovieHomeResponse;
 
 import java.util.List;
@@ -44,6 +46,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
                 .placeholder(R.drawable.ic_placeholder)
                 .error(R.drawable.ic_error)
                 .into(holder.ivPoster);
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, MovieDetailActivity.class);
+            intent.putExtra("movieId", movie.getMovieId());
+            context.startActivity(intent);
+        });
+
     }
 
     @Override
