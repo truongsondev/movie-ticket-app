@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.movie_ticket_app.MainActivity;
 import com.example.movie_ticket_app.R;
+import com.example.movie_ticket_app.data.model.FoodItem;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -23,6 +25,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
@@ -37,7 +40,9 @@ public class ConfirmationActivity extends AppCompatActivity {
     private TextView tvBookingId, tvBookingDate;
     private TextView tvMovieTitle, tvMovieFormat, tvTheaterName, tvShowtime;
     private TextView tvTicketSummary, tvSeatInfo, tvTotalPrice;
+    private TextView tvFoodSummary; // Added for food summary
     private ImageView ivMoviePoster, ivQrCode;
+    private LinearLayout foodSummaryContainer; // Container for food summary
 
     // Data
     private int movieId;
@@ -53,6 +58,9 @@ public class ConfirmationActivity extends AppCompatActivity {
     private String showtimeText;
     private String moviePosterUrl;
     private String bookingId;
+    private ArrayList<String> foodNames;
+    private ArrayList<Integer> foodQuantities;
+    private ArrayList<String> foodPricesStr;
     private NumberFormat currencyFormatter;
 
     @Override
@@ -81,6 +89,9 @@ public class ConfirmationActivity extends AppCompatActivity {
         // Update ticket summary
         updateTicketSummary();
 
+        // Update food summary
+        updateFoodSummary();
+
         // Generate QR code
         generateQrCode();
     }
@@ -94,11 +105,16 @@ public class ConfirmationActivity extends AppCompatActivity {
         foodPrice = getIntent().getDoubleExtra("FOOD_PRICE", 0);
         totalPrice = getIntent().getDoubleExtra("TOTAL_PRICE", 0);
 
+        // Get food information
+        foodNames = getIntent().getStringArrayListExtra("FOOD_NAMES");
+        foodQuantities = getIntent().getIntegerArrayListExtra("FOOD_QUANTITIES");
+        foodPricesStr = getIntent().getStringArrayListExtra("FOOD_PRICES");
+
         // In a real app, you would fetch these from your API based on the IDs
-        movieTitle = "Thám Tử Kiền: Kỳ Án Không Đầu";
+        movieTitle = "Biệt đội sấm set";
         movieFormat = "2D Phụ Đề - T16";
-        theaterName = "Galaxy Nguyễn Du - RAP 5";
-        showtimeText = "Suất: 18:15 - Thứ Ba, 13/05/2025";
+        theaterName = "RAP B";
+        showtimeText = "Suất: 20:00 - Chủ Nhật, 1/6/2025";
     }
 
     private void initViews() {
@@ -121,8 +137,29 @@ public class ConfirmationActivity extends AppCompatActivity {
         tvSeatInfo = findViewById(R.id.tvSeatInfo);
         tvTotalPrice = findViewById(R.id.tvTotalPrice);
 
+        // Food summary
+        foodSummaryContainer = findViewById(R.id.foodSummaryContainer);
+        tvFoodSummary = findViewById(R.id.tvFoodSummary);
+
+        // If food summary TextView doesn't exist, create it
+        if (tvFoodSummary == null && foodNames != null && !foodNames.isEmpty()) {
+            tvFoodSummary = new TextView(this);
+            tvFoodSummary.setId(View.generateViewId());
+            tvFoodSummary.setTextColor(getResources().getColor(android.R.color.black));
+            tvFoodSummary.setTextSize(14);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.topMargin = 4;
+            tvFoodSummary.setLayoutParams(params);
+
+            if (foodSummaryContainer != null) {
+                foodSummaryContainer.addView(tvFoodSummary);
+            }
+        }
+
         // QR Code
-        ivQrCode = findViewById(R.id.ivQrCode);
+
 
         // Buttons
         btnBackToHome = findViewById(R.id.btnBackToHome);
@@ -147,8 +184,11 @@ public class ConfirmationActivity extends AppCompatActivity {
         });
 
         btnSaveTicket.setOnClickListener(v -> {
-            // In a real app, you would save the ticket to the device or share it
-            Toast.makeText(this, "Đã lưu vé vào thiết bị", Toast.LENGTH_SHORT).show();
+            // Changed: Now also returns to MainActivity instead of showing toast
+            Intent intent = new Intent(ConfirmationActivity.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 
@@ -179,22 +219,67 @@ public class ConfirmationActivity extends AppCompatActivity {
                     .into(ivMoviePoster);
         } else {
             // Set default poster
-            ivMoviePoster.setImageResource(R.drawable.placeholder_poster);
+            ivMoviePoster.setImageResource(R.drawable.ss);
         }
     }
 
     private void updateTicketSummary() {
-        // Set ticket summary
-        tvTicketSummary.setText("1x Người Lớn - Member");
+        // Parse the selected seats string to get the count
+        String seatCount = "1x"; // Default
+        if (selectedSeats != null && selectedSeats.contains("x")) {
+            seatCount = selectedSeats.substring(0, selectedSeats.indexOf("x") + 1);
+        }
+
+        // Set ticket summary based on seat count
+        if (seatCount.startsWith("1")) {
+            tvTicketSummary.setText(seatCount + " Người Lớn - Member");
+        } else {
+            tvTicketSummary.setText(seatCount + " Người Lớn - Member");
+        }
 
         // Set seat info
-        tvSeatInfo.setText("Ghế: A9");
+        if (selectedSeats != null && selectedSeats.contains("Ghế:")) {
+            String seatInfo = selectedSeats.substring(selectedSeats.indexOf("Ghế:"));
+            tvSeatInfo.setText(seatInfo);
+        } else {
+            tvSeatInfo.setText("Ghế: Không xác định");
+        }
 
         // Set total price
         tvTotalPrice.setText(currencyFormatter.format(totalPrice) + " đ");
     }
 
+    private void updateFoodSummary() {
+        // If there are no food items or the TextView doesn't exist, return
+        if (foodNames == null || foodNames.isEmpty() || tvFoodSummary == null) {
+            if (tvFoodSummary != null) {
+                tvFoodSummary.setVisibility(View.GONE);
+            }
+            return;
+        }
+
+        StringBuilder foodSummary = new StringBuilder("Đồ ăn: ");
+
+        for (int i = 0; i < foodNames.size(); i++) {
+            String name = foodNames.get(i);
+            int quantity = foodQuantities.get(i);
+
+            foodSummary.append(quantity).append("x ").append(name);
+
+            if (i < foodNames.size() - 1) {
+                foodSummary.append(", ");
+            }
+        }
+
+        tvFoodSummary.setText(foodSummary.toString());
+        tvFoodSummary.setVisibility(View.VISIBLE);
+    }
+
     private void generateQrCode() {
+        if (ivQrCode == null) {
+            return; // Skip if QR code ImageView is not found
+        }
+
         try {
             // Generate QR code content
             String qrContent = "BOOKING:" + bookingId +
@@ -215,6 +300,9 @@ public class ConfirmationActivity extends AppCompatActivity {
             e.printStackTrace();
             // If QR code generation fails, show a placeholder
             ivQrCode.setImageResource(R.drawable.qr_placeholder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Handle other exceptions
         }
     }
 }

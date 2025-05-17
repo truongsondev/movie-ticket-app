@@ -145,7 +145,7 @@
             android:layout_width="80dp"
             android:layout_height="120dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/placeholder_poster"
+            android:src="@drawable/ss"
             android:contentDescription="Movie Poster" />
 
         <LinearLayout
@@ -158,7 +158,7 @@
                 android:id="@+id/movieTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Thám Tử Kiền: Kỳ Án Không Đầu"
+                android:text="Biệt đội sấm sét"
                 android:textColor="#212121"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -193,7 +193,7 @@
                 android:id="@+id/theaterName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Galaxy Nguyễn Du - RAP 5"
+                android:text="RAP B"
                 android:textColor="#212121"
                 android:textSize="16sp"
                 android:layout_marginTop="8dp" />
@@ -202,10 +202,24 @@
                 android:id="@+id/showtime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Suất: 18:15 - Thứ Ba, 13/05/2025"
+                android:text="Suất: 20:00 - Chủ Nhật, 1/6/2025"
                 android:textColor="#212121"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />
+            <TextView
+                android:id="@+id/selectedSeatsInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/selected_seats_background"
+                android:padding="12dp"
+                android:textColor="#0066CC"
+                android:textSize="14sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/seatLegend"
+                app:layout_constraintTop_toBottomOf="@id/seatMapScrollView"
+                app:layout_constraintVertical_bias="0.0" />
         </LinearLayout>
     </LinearLayout>
 

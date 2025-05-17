@@ -2,32 +2,20 @@ package com.example.movie_ticket_app.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bumptech.glide.Glide;
 import com.example.movie_ticket_app.R;
-import com.example.movie_ticket_app.common.APIResponse;
-import com.example.movie_ticket_app.config.ApiClient;
-import com.example.movie_ticket_app.data.api.ApiServices;
-
 import com.example.movie_ticket_app.data.model.Seat;
 import com.example.movie_ticket_app.data.model.ShowTime;
-import com.example.movie_ticket_app.dto.movie.response.GetShowResponse;
-import com.example.movie_ticket_app.dto.movie.response.MovieGetShowResponse;
-import com.example.movie_ticket_app.dto.movie.response.ShowDTO;
-import com.example.movie_ticket_app.dto.movie.response.ShowSeatDTO;
-
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -38,10 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class SeatSelectionActivity extends AppCompatActivity {
 
     private static final String TAG = "SeatSelectionActivity";
@@ -50,18 +34,17 @@ public class SeatSelectionActivity extends AppCompatActivity {
     private ImageButton btnBack;
     private Button btnBack2, btnContinue;
     private TextView movieTitle, movieFormat, movieRoom, theaterName, showtime, totalPrice;
-    private ImageView moviePoster;
+    private TextView selectedSeatsInfo; // Added for displaying selected seats
     private Spinner showtimeSpinner;
 
     // Data
-    private int movieId;
-    private int theaterId;
-    private int showtimeId;
-    private String moviePosterUrl;
+    private int showId = 1;
+    private int theaterId = 1;
+    private int showtimeId = 1;
     private List<ShowTime> showtimes = new ArrayList<>();
     private List<Seat> selectedSeats = new ArrayList<>();
     private Map<String, TextView> seatViews = new HashMap<>();
-    private double ticketPrice = 0;
+    private double ticketPrice = 90000; // Default price in VND
     private NumberFormat currencyFormatter;
 
     @Override
@@ -72,27 +55,14 @@ public class SeatSelectionActivity extends AppCompatActivity {
         // Initialize currency formatter
         currencyFormatter = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
 
-        // Get data from intent
-        movieId = getIntent().getIntExtra("MOVIE_ID", 0);
-        theaterId = getIntent().getIntExtra("THEATER_ID", 0);
-        showtimeId = getIntent().getIntExtra("SHOWTIME_ID", 0);
-        moviePosterUrl = getIntent().getStringExtra("MOVIE_POSTER_URL");
-
-        if (movieId == 0 || theaterId == 0 || showtimeId == 0) {
-            Toast.makeText(this, "Invalid movie or theater selection", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
         // Initialize views
         initViews();
 
         // Setup click listeners
         setupListeners();
 
-        // Load movie and showtime data
-        loadMovieData();
-
+        // Load hardcoded data
+        loadHardcodedData();
     }
 
     private void initViews() {
@@ -106,8 +76,8 @@ public class SeatSelectionActivity extends AppCompatActivity {
         theaterName = findViewById(R.id.theaterName);
         showtime = findViewById(R.id.showtime);
         totalPrice = findViewById(R.id.totalPrice);
+        selectedSeatsInfo = findViewById(R.id.selectedSeatsInfo); // Initialize the selected seats info TextView
 
-        moviePoster = findViewById(R.id.moviePoster);
         showtimeSpinner = findViewById(R.id.showtimeSpinner);
 
         // Initialize seat views
@@ -140,12 +110,15 @@ public class SeatSelectionActivity extends AppCompatActivity {
                 return;
             }
 
+            // Format selected seats for display
+            String formattedSeats = formatSelectedSeats();
+
             // Navigate to food selection screen
             Intent intent = new Intent(SeatSelectionActivity.this, FoodSelectionActivity.class);
-            intent.putExtra("MOVIE_ID", movieId);
+            intent.putExtra("MOVIE_ID", showId);
             intent.putExtra("THEATER_ID", theaterId);
             intent.putExtra("SHOWTIME_ID", showtimeId);
-            intent.putExtra("SELECTED_SEATS", selectedSeats.toString());
+            intent.putExtra("SELECTED_SEATS", formattedSeats);
             intent.putExtra("TICKET_PRICE", getTotalPrice());
             startActivity(intent);
         });
@@ -157,8 +130,8 @@ public class SeatSelectionActivity extends AppCompatActivity {
                 showtimeId = selected.getId();
                 updateShowtimeInfo(selected);
 
-                // Fetch new seat map for the selected showtime
-                fetchShowDetails(showtimeId);
+                // Reset seat selection when changing showtime
+                resetSeatSelection();
             }
 
             @Override
@@ -209,187 +182,71 @@ public class SeatSelectionActivity extends AppCompatActivity {
 
                 // Update total price
                 updateTotalPrice();
+
+                // Update selected seats info
+                updateSelectedSeatsInfo();
             });
         }
     }
 
-    private void loadMovieData() {
-        // Call API to get show information
-        fetchShowDetails(showtimeId);
-    }
+    private void loadHardcodedData() {
+        // Set movie information
+        movieTitle.setText("Biệt đội sấm sét");
+        movieFormat.setText("2D Phụ Đề - ");
+        movieRoom.setText("T16");
+        theaterName.setText("Rạp B");
 
-    private void fetchShowDetails(int showId) {
-        // Show loading state
-        // You might want to add a progress bar here
+        // Create hardcoded showtimes
+        createHardcodedShowtimes();
 
-        ApiServices apiServices = ApiClient.getRetrofitInstance().create(ApiServices.class);
-        Call<APIResponse<GetShowResponse>> call = apiServices.getShow(showId);
-
-        call.enqueue(new Callback<APIResponse<GetShowResponse>>() {
-            @Override
-            public void onResponse(Call<APIResponse<GetShowResponse>> call, Response<APIResponse<GetShowResponse>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getMetadata() != null) {
-                    GetShowResponse showResponse = response.body().getMetadata();
-
-                    // Update movie information
-                    updateMovieInfo(showResponse);
-
-                    // Update showtime information
-                    updateShowtimeInfo(showResponse);
-
-                    // Load available showtimes
-                    loadAvailableShowtimes(showResponse.getOtherShows());
-
-                    // Load seat map
-                    loadSeatMap(showResponse.getSeats());
-                } else {
-                    Toast.makeText(SeatSelectionActivity.this,
-                            "Failed to load show details", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Error response: " + response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<APIResponse<GetShowResponse>> call, Throwable t) {
-                Toast.makeText(SeatSelectionActivity.this,
-                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Network error during fetchShowDetails", t);
-            }
-        });
-    }
-
-    private void updateMovieInfo(GetShowResponse showResponse) {
-        MovieGetShowResponse movie = showResponse.getMovie();
-
-        if (movie != null) {
-            // Update movie title
-            movieTitle.setText(movie.getMovieName());
-
-            // Update movie format (assuming it's 2D with subtitles)
-            movieFormat.setText("2D Phụ Đề - ");
-
-            // Update movie age rating
-            movieRoom.setText("T" + movie.getMovieAge());
-
-            // Update theater name
-            theaterName.setText(showResponse.getCinemaName() + " - " + showResponse.getCinemaHallName());
-
-            // Load movie poster
-            String posterUrl = movie.getMovieThumbnail();
-            if (posterUrl != null && !posterUrl.isEmpty()) {
-                Glide.with(this)
-                        .load(posterUrl)
-                        .placeholder(R.drawable.placeholder_poster)
-                        .into(moviePoster);
-            } else {
-                moviePoster.setImageResource(R.drawable.placeholder_poster);
-            }
-
-            // Save movie ID
-            movieId = movie.getMovieId();
-        }
-    }
-
-    private void updateShowtimeInfo(GetShowResponse showResponse) {
-        // Format showtime
-        String startTime = showResponse.getShowStartTime();
-
-        try {
-            // Parse the API date format (assuming it's in ISO format)
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            Date date = inputFormat.parse(startTime);
-
-            // Format for display
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd/MM/yyyy", new Locale("vi", "VN"));
-
-            String formattedTime = timeFormat.format(date);
-            String formattedDate = dateFormat.format(date);
-
-            showtime.setText("Suất: " + formattedTime + " - " + formattedDate);
-        } catch (Exception e) {
-            Log.e(TAG, "Error parsing date", e);
-            showtime.setText("Suất: " + startTime);
+        // Set initial showtime
+        if (!showtimes.isEmpty()) {
+            ShowTime initialShowtime = showtimes.get(0);
+            updateShowtimeInfo(initialShowtime);
         }
 
-        // Save showtime ID
-        showtimeId = showResponse.getShowId();
+        // Load seat map with hardcoded unavailable seats
+        loadSeatMap();
     }
 
-    private void loadAvailableShowtimes(List<ShowDTO> otherShows) {
-        if (otherShows != null && !otherShows.isEmpty()) {
-            showtimes.clear();
+    private void createHardcodedShowtimes() {
+        showtimes.clear();
 
-            for (ShowDTO showDTO : otherShows) {
-                ShowTime st = new ShowTime();
-                st.setId(showDTO.getShowId());
+        // Create some hardcoded showtimes
+        ShowTime st1 = new ShowTime();
+        st1.setId(1);
+        st1.setStartTime("20:00");
+        st1.setDate("2025-06-01");
+        st1.setRoom("Rạp B");
+        st1.setPrice(90000);
+        showtimes.add(st1);
 
-                // Format the time
-                String startTime = showDTO.getShowStartTime();
-                try {
-                    SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        ShowTime st2 = new ShowTime();
+        st2.setId(2);
+        st2.setStartTime("20:30");
+        st2.setDate("2025-05-13");
+        st2.setRoom("Rạp B");
+        st2.setPrice(90000);
+        showtimes.add(st2);
 
-                    Date date = inputFormat.parse(startTime);
-                    st.setStartTime(timeFormat.format(date));
-                    st.setDate(dateFormat.format(date));
-                    st.setRoom(theaterName.getText().toString());
-                    st.setPrice(90000); // Default price if not provided by API
+        ShowTime st3 = new ShowTime();
+        st3.setId(3);
+        st3.setStartTime("20:00");
+        st3.setDate("2025-6-1");
+        st3.setRoom("Rạp B");
+        st3.setPrice(90000);
+        showtimes.add(st3);
 
-                    showtimes.add(st);
-                } catch (Exception e) {
-                    Log.e(TAG, "Error parsing showtime date", e);
-                }
-            }
-
-            // Setup spinner
-            List<String> showtimeStrings = new ArrayList<>();
-            for (ShowTime st : showtimes) {
-                showtimeStrings.add(st.getStartTime());
-            }
-
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    this, android.R.layout.simple_spinner_item, showtimeStrings);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            showtimeSpinner.setAdapter(adapter);
-
-            // Set selected showtime
-            for (int i = 0; i < showtimes.size(); i++) {
-                if (showtimes.get(i).getId() == showtimeId) {
-                    showtimeSpinner.setSelection(i);
-                    updateShowtimeInfo(showtimes.get(i));
-                    break;
-                }
-            }
-        }
-    }
-
-    private void loadSeatMap(List<ShowSeatDTO> seats) {
-        // Reset selected seats
-        selectedSeats.clear();
-
-        // Reset all seats to available
-        for (TextView seatView : seatViews.values()) {
-            seatView.setBackground(getResources().getDrawable(R.drawable.seat_available));
-            seatView.setTextColor(getResources().getColor(android.R.color.black));
+        // Setup spinner
+        List<String> showtimeStrings = new ArrayList<>();
+        for (ShowTime st : showtimes) {
+            showtimeStrings.add(st.getStartTime());
         }
 
-        // In a real implementation, you would use the seats data to determine which seats are available
-        // For now, we'll use a simplified approach with some hardcoded unavailable seats
-
-        // Set some seats as unavailable (for demonstration)
-        String[] unavailableSeats = {"I4", "I5", "I6", "H3", "H4", "H5", "H6", "G3", "G4", "G5", "G6"};
-        for (String seatId : unavailableSeats) {
-            TextView seatView = seatViews.get(seatId);
-            if (seatView != null) {
-                seatView.setBackground(getResources().getDrawable(R.drawable.seat_unavailable));
-                seatView.setTextColor(getResources().getColor(R.color.purple_700));
-            }
-        }
-
-        // Update total price
-        updateTotalPrice();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, showtimeStrings);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        showtimeSpinner.setAdapter(adapter);
     }
 
     private void updateShowtimeInfo(ShowTime showtime) {
@@ -402,7 +259,6 @@ public class SeatSelectionActivity extends AppCompatActivity {
 
             this.showtime.setText("Suất: " + showtime.getStartTime() + " - " + formattedDate);
         } catch (Exception e) {
-            Log.e(TAG, "Error parsing date", e);
             this.showtime.setText("Suất: " + showtime.getStartTime() + " - " + showtime.getDate());
         }
 
@@ -411,16 +267,13 @@ public class SeatSelectionActivity extends AppCompatActivity {
     }
 
     private void loadSeatMap() {
-        // Reset selected seats
-        selectedSeats.clear();
-
         // Reset all seats to available
         for (TextView seatView : seatViews.values()) {
             seatView.setBackground(getResources().getDrawable(R.drawable.seat_available));
             seatView.setTextColor(getResources().getColor(android.R.color.black));
         }
 
-        // Set some seats as unavailable (for demonstration)
+        // Set some seats as unavailable (hardcoded)
         String[] unavailableSeats = {"I4", "I5", "I6", "H3", "H4", "H5", "H6", "G3", "G4", "G5", "G6"};
         for (String seatId : unavailableSeats) {
             TextView seatView = seatViews.get(seatId);
@@ -434,11 +287,71 @@ public class SeatSelectionActivity extends AppCompatActivity {
         updateTotalPrice();
     }
 
+    private void resetSeatSelection() {
+        // Clear selected seats
+        selectedSeats.clear();
+
+        // Reset seat map
+        loadSeatMap();
+
+        // Update UI
+        updateTotalPrice();
+        updateSelectedSeatsInfo();
+    }
+
     private void updateTotalPrice() {
         totalPrice.setText(currencyFormatter.format(getTotalPrice()) + " đ");
     }
 
+    private void updateSelectedSeatsInfo() {
+        if (selectedSeats.isEmpty()) {
+            selectedSeatsInfo.setVisibility(View.GONE);
+            return;
+        }
+
+        selectedSeatsInfo.setVisibility(View.VISIBLE);
+        StringBuilder sb = new StringBuilder("Ghế đã chọn: ");
+
+        for (int i = 0; i < selectedSeats.size(); i++) {
+            Seat seat = selectedSeats.get(i);
+            sb.append(seat.getRow()).append(seat.getNumber());
+
+            if (i < selectedSeats.size() - 1) {
+                sb.append(", ");
+            }
+        }
+
+        selectedSeatsInfo.setText(sb.toString());
+    }
+
     private double getTotalPrice() {
         return selectedSeats.size() * ticketPrice;
+    }
+
+    // Format selected seats for display in FoodSelectionActivity
+    private String formatSelectedSeats() {
+        StringBuilder sb = new StringBuilder();
+
+        // Add seat count
+        sb.append(selectedSeats.size()).append("x");
+
+        // Add seat type
+        if (selectedSeats.size() == 1) {
+            sb.append(" Ghế đơn\nGhế: ");
+        } else {
+            sb.append(" Ghế\nGhế: ");
+        }
+
+        // Add seat names
+        for (int i = 0; i < selectedSeats.size(); i++) {
+            Seat seat = selectedSeats.get(i);
+            sb.append(seat.getRow()).append(seat.getNumber());
+
+            if (i < selectedSeats.size() - 1) {
+                sb.append(", ");
+            }
+        }
+
+        return sb.toString();
     }
 }

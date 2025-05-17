@@ -32,7 +32,6 @@ public class ShowTimesFragment extends Fragment {
     }
 
     public void setShowTimes(List<ShowCase> showTimes) {
-        Log.d("showcase::::", showTimes.toString());
         if (showTimes != null) {
             this.showTimes.clear();
             this.showTimes.addAll(showTimes);
@@ -61,7 +60,7 @@ public class ShowTimesFragment extends Fragment {
 
         // Set up RecyclerView
         showTimesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ShowTimesAdapter(showTimes);
+        adapter = new ShowTimesAdapter(getContext(),showTimes);
         showTimesRecyclerView.setAdapter(adapter);
 
         updateNoShowTimesVisibility();

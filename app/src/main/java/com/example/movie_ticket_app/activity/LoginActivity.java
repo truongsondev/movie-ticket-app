@@ -125,14 +125,8 @@ public class LoginActivity extends AppCompatActivity {
     private void loginUser() {
         String email = editTextEmail.getText().toString().trim();
         String password = editTextPassword.getText().toString().trim();
-
-        // Show loading state
         setLoadingState(true);
-
-        // Create login request
         LoginRequest loginRequest = new LoginRequest(email, password);
-
-        // Call login API
         ApiServices apiServices = ApiClient.getRetrofitInstance().create(ApiServices.class);
         Call<APIResponse<LoginResponse>> call = apiServices.login(loginRequest);
 

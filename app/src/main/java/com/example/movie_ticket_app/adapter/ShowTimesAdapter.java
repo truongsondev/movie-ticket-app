@@ -1,5 +1,7 @@
 package com.example.movie_ticket_app.adapter;
 
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.movie_ticket_app.R;
+import com.example.movie_ticket_app.activity.SeatSelectionActivity;
 import com.example.movie_ticket_app.data.model.ShowCase;
 import com.example.movie_ticket_app.dto.movie.response.MovieDetailResponse;
 
@@ -26,8 +29,11 @@ public class ShowTimesAdapter extends RecyclerView.Adapter<ShowTimesAdapter.Show
     private SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private Context context;
 
-    public ShowTimesAdapter(List<ShowCase> showTimes) {
+    public ShowTimesAdapter(Context context, List<ShowCase> showTimes) {
+        this.context = context;
+
         this.showTimes = showTimes;
     }
 
@@ -65,11 +71,17 @@ public class ShowTimesAdapter extends RecyclerView.Adapter<ShowTimesAdapter.Show
             holder.showDate.setText(date);
             holder.showTime.setText(startTime + " - " + endTime);
 
-            // Set click listener for booking button
             holder.bookButton.setOnClickListener(v -> {
-                // Handle booking action
-                // You would typically navigate to a booking screen here
+                Intent intent = new Intent(context, SeatSelectionActivity.class);
+
+
+                intent.putExtra("show_id", showTime.getShowId()); // ví dụ nếu có getId()
+                intent.putExtra("THEATER_ID", showTime.getCinemaHall().getCinemaHallId());
+                intent.putExtra("SHOWTIME_ID", showTime.getShowId());
+
+                context.startActivity(intent);
             });
+
 
         } catch (ParseException e) {
             e.printStackTrace();

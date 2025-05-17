@@ -42,7 +42,6 @@ public class MovieFragmentAdapter extends FragmentStateAdapter {
                 // Showtimes tab
                 ShowTimesFragment showTimesFragment = new ShowTimesFragment();
                 if (movieData != null) {
-                    Log.d("movie:::", movieData.getMovieName());
                     showTimesFragment.setShowTimes(movieData.getShows());
                 }
                 return showTimesFragment;

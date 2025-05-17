@@ -1,8 +1,9 @@
 package com.example.movie_ticket_app.dto.movie.response;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class GetShowResponse {
+public class GetShowResponse implements Serializable {
     private MovieGetShowResponse movie;
     private int showId;
     private String showStartTime;

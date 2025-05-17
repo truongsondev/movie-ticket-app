@@ -1,13 +1,40 @@
 package com.example.movie_ticket_app.data.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class FoodItem {
+public class FoodItem implements Parcelable {
     private int id;
     private String name;
     private String description;
     private double price;
+    private int quantity;
     private int imageResourceId;
-    private int quantity = 0;
+
+    public FoodItem() {
+        this.quantity = 0;
+    }
+
+    protected FoodItem(Parcel in) {
+        id = in.readInt();
+        name = in.readString();
+        description = in.readString();
+        price = in.readDouble();
+        quantity = in.readInt();
+        imageResourceId = in.readInt();
+    }
+
+    public static final Creator<FoodItem> CREATOR = new Creator<FoodItem>() {
+        @Override
+        public FoodItem createFromParcel(Parcel in) {
+            return new FoodItem(in);
+        }
+
+        @Override
+        public FoodItem[] newArray(int size) {
+            return new FoodItem[size];
+        }
+    };
 
     public int getId() {
         return id;
@@ -41,6 +68,14 @@ public class FoodItem {
         this.price = price;
     }
 
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public int getImageResourceId() {
         return imageResourceId;
     }
@@ -49,11 +84,18 @@ public class FoodItem {
         this.imageResourceId = imageResourceId;
     }
 
-    public int getQuantity() {
-        return quantity;
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(name);
+        dest.writeString(description);
+        dest.writeDouble(price);
+        dest.writeInt(quantity);
+        dest.writeInt(imageResourceId);
     }
 }

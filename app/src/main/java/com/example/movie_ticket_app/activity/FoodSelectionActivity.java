@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.movie_ticket_app.R;
 import com.example.movie_ticket_app.adapter.FoodItemAdapter;
 import com.example.movie_ticket_app.data.model.FoodItem;
-
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -30,7 +28,7 @@ public class FoodSelectionActivity extends AppCompatActivity {
     // UI Components
     private ImageButton btnBack;
     private Button btnContinue, btnGoBack;
-    private TextView tvTitle, tvTotalPrice, tvSeatSummary;
+    private TextView tvTitle, tvTotalPrice, tvSeatSummary, tvSeatPrice; // Added tvSeatPrice
     private RecyclerView recyclerViewFoodItems;
 
     // Data
@@ -79,6 +77,7 @@ public class FoodSelectionActivity extends AppCompatActivity {
         tvTitle = findViewById(R.id.tvTitle);
         tvTotalPrice = findViewById(R.id.tvTotalPrice);
         tvSeatSummary = findViewById(R.id.tvSeatSummary);
+        tvSeatPrice = findViewById(R.id.tvSeatPrice); // Initialize tvSeatPrice
         recyclerViewFoodItems = findViewById(R.id.recyclerViewFoodItems);
 
         // Setup RecyclerView
@@ -183,13 +182,14 @@ public class FoodSelectionActivity extends AppCompatActivity {
 
     private void updateSeatSummary() {
         if (selectedSeats != null && !selectedSeats.isEmpty()) {
-            String seatCount = "1x"; // Default to 1 seat
-            String seatNumber = "A9"; // Default seat number
+            // Display the formatted seat information that was passed from SeatSelectionActivity
+            tvSeatSummary.setText(selectedSeats);
 
-            // In a real app, you would parse the selectedSeats string to get the actual count and seat numbers
+            // Update the seat price display
+            tvSeatPrice.setText(currencyFormatter.format(ticketPrice) + " đ");
 
-            tvSeatSummary.setText(seatCount + " Ghế đơn\nGhế: " + seatNumber);
-            tvTotalPrice.setText(currencyFormatter.format(ticketPrice) + " đ");
+            // Update total price
+            tvTotalPrice.setText(currencyFormatter.format(ticketPrice + foodPrice) + " đ");
         }
     }
 }
